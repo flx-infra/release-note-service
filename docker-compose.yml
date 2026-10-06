@@ -13,7 +13,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: ['${NODE:?definir en Portainer, p. ej. node.hostname==NOMBRE_DEL_NODO}']
+        constraints: ['${NODE}']
       resources:
         limits:
           memory: 1g
@@ -24,20 +24,20 @@ services:
       rollback_config:
         order: stop-first
     environment:
-      LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD:?definir en Portainer, contrasena fuerte}
-      SESSION_SECRET: ${SESSION_SECRET:?definir en Portainer, minimo 32 caracteres}
-      PUBLIC_URL: ${PUBLIC_URL:?definir en Portainer, p. ej. http://10.0.0.5:8300}
-      INGEST_BITBUCKET_TOKEN: ${INGEST_BITBUCKET_TOKEN:-}
+      LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
+      PUBLIC_URL: ${PUBLIC_URL}
+      INGEST_BITBUCKET_TOKEN: ${INGEST_BITBUCKET_TOKEN}
     volumes:
       - data:/data
     logging:
       driver: loki
       options:
-        loki-url: ${LOKI_URL:?definir en Portainer, la URL de push de Loki}
+        loki-url: ${LOKI_URL}
 
 volumes:
   data:
-    name: '${SERVICE_NAME:?definir en Portainer, p. ej. releasenotes}_data'
+    name: '${SERVICE_NAME}_releasenotes_data'
 
 networks:
   traefik:
