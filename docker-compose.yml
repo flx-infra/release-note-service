@@ -1,0 +1,94 @@
+version: '3.6'
+
+services: 
+  backend:
+    image: fabreguesm/flexxus-order-backend:staging
+    hostname: flxorder-flexxus-com-ar
+    ports: 
+      - "7000:5000"
+    networks:
+      - traefik
+    deploy:      
+      placement:
+        constraints: ["${NODE}"]
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DB_TYPE=MariaDB
+      - PREWARM_LICENSE=false
+      - PREWARM_CONNECTORS=false
+    restart: unless-stopped
+    volumes:
+      - 'node_data:/app/data/'
+      - 'factura_data:/app/factura_electronica/'
+      - 'pdf_data:/app/public/pdf/' 
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL}  
+
+  frontend:
+    image: fabreguesm/flexxus-order-frontend:staging
+    ports: 
+      - "7001:80"
+    networks:
+      - traefik
+    deploy:      
+      placement:
+        constraints: ["${NODE}"]           
+    environment:
+      - VITE_GATEWAY_SECRET_KEY=${VITE_GATEWAY_SECRET_KEY}
+    restart: unless-stopped 
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL}  
+
+  storybook:
+    image: fabreguesm/flexxus-order-storybook:staging
+    ports:
+      - "7002:80"
+    restart: unless-stopped  
+    networks:
+      - traefik
+    deploy:      
+      placement:
+        constraints: ["${NODE}"]          
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL}
+
+ # shepherd:
+ #   image: mazzolino/shepherd
+ #   volumes:
+ #     - /var/run/docker.sock:/var/run/docker.sock
+ #   environment:
+ #     - SLEEP_TIME=30s
+ #     - IMAGE_AUTOCLEAN_LIMIT=5
+ #     - FILTER_SERVICES=name=flxorder-flexxus-com-ar
+ #     - REGISTRY_USER=${DOCKERHUB_USERNAME}
+ #     - REGISTRY_PASSWORD=${DOCKERHUB_PASSWORD}
+ #   restart: unless-stopped
+ #   deploy:
+ #     placement:
+ #       constraints:
+ #         - node.role == manager
+ #   logging:
+ #     driver: loki
+ #     options:
+ #       loki-url: ${LOKI_URL}
+
+
+volumes:
+  node_data:
+    name: "${SERVICE_NAME}_node-data"
+  factura_data:
+    name: "${SERVICE_NAME}_factura-data"
+  pdf_data:
+    name: "${SERVICE_NAME}_pdf-data"   
+
+networks:
+  traefik:
+    external:
+      name: traefik-network
