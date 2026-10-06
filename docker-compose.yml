@@ -30,10 +30,6 @@ services:
       INGEST_BITBUCKET_TOKEN: ${INGEST_BITBUCKET_TOKEN}
     volumes:
       - data:/data
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}
 
 volumes:
   data:
