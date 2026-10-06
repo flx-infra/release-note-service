@@ -1,94 +1,45 @@
-version: '3.6'
+version: '3.8'
 
-services: 
-  backend:
-    image: fabreguesm/flexxus-order-backend:staging
-    hostname: flxorder-flexxus-com-ar
-    ports: 
-      - "7000:5000"
-    networks:
-      - traefik
-    deploy:      
-      placement:
-        constraints: ["${NODE}"]
-    environment:
-      - NODE_ENV=production
-      - PORT=5000
-      - DB_TYPE=MariaDB
-      - PREWARM_LICENSE=false
-      - PREWARM_CONNECTORS=false
-    restart: unless-stopped
-    volumes:
-      - 'node_data:/app/data/'
-      - 'factura_data:/app/factura_electronica/'
-      - 'pdf_data:/app/public/pdf/' 
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}  
-
-  frontend:
-    image: fabreguesm/flexxus-order-frontend:staging
-    ports: 
-      - "7001:80"
-    networks:
-      - traefik
-    deploy:      
-      placement:
-        constraints: ["${NODE}"]           
-    environment:
-      - VITE_GATEWAY_SECRET_KEY=${VITE_GATEWAY_SECRET_KEY}
-    restart: unless-stopped 
-    logging:
-      driver: loki
-      options:
-        loki-url: ${LOKI_URL}  
-
-  storybook:
-    image: fabreguesm/flexxus-order-storybook:staging
+services:
+  app:
+    image: fabreguesm/releasenoteservice:0.6.0
     ports:
-      - "7002:80"
-    restart: unless-stopped  
+      - target: 3000
+        published: ${PUERTO:-8300}
+        protocol: tcp
+        mode: host
     networks:
       - traefik
-    deploy:      
+    deploy:
+      replicas: 1
       placement:
-        constraints: ["${NODE}"]          
+        constraints: ['${NODE:?definir en Portainer, p. ej. node.hostname==NOMBRE_DEL_NODO}']
+      resources:
+        limits:
+          memory: 1g
+      update_config:
+        order: stop-first
+        failure_action: rollback
+        monitor: 60s
+      rollback_config:
+        order: stop-first
+    environment:
+      LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD:?definir en Portainer, contrasena fuerte}
+      SESSION_SECRET: ${SESSION_SECRET:?definir en Portainer, minimo 32 caracteres}
+      PUBLIC_URL: ${PUBLIC_URL:?definir en Portainer, p. ej. http://10.0.0.5:8300}
+      INGEST_BITBUCKET_TOKEN: ${INGEST_BITBUCKET_TOKEN:-}
+    volumes:
+      - data:/data
     logging:
       driver: loki
       options:
-        loki-url: ${LOKI_URL}
-
- # shepherd:
- #   image: mazzolino/shepherd
- #   volumes:
- #     - /var/run/docker.sock:/var/run/docker.sock
- #   environment:
- #     - SLEEP_TIME=30s
- #     - IMAGE_AUTOCLEAN_LIMIT=5
- #     - FILTER_SERVICES=name=flxorder-flexxus-com-ar
- #     - REGISTRY_USER=${DOCKERHUB_USERNAME}
- #     - REGISTRY_PASSWORD=${DOCKERHUB_PASSWORD}
- #   restart: unless-stopped
- #   deploy:
- #     placement:
- #       constraints:
- #         - node.role == manager
- #   logging:
- #     driver: loki
- #     options:
- #       loki-url: ${LOKI_URL}
-
+        loki-url: ${LOKI_URL:?definir en Portainer, la URL de push de Loki}
 
 volumes:
-  node_data:
-    name: "${SERVICE_NAME}_node-data"
-  factura_data:
-    name: "${SERVICE_NAME}_factura-data"
-  pdf_data:
-    name: "${SERVICE_NAME}_pdf-data"   
+  data:
+    name: '${SERVICE_NAME:?definir en Portainer, p. ej. releasenotes}_data'
 
 networks:
   traefik:
-    external:
-      name: traefik-network
+    external: true
+    name: traefik-network
