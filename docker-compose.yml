@@ -5,7 +5,7 @@ services:
     image: fabreguesm/releasenoteservice:0.6.0
     ports:
       - target: 3000
-        published: ${PUERTO:-8300}
+        published: ${PUERTO}
         protocol: tcp
         mode: host
     networks:
