@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: fabreguesm/releasenoteservice:0.6.0
+    image: fabreguesm/releasenoteservice:${TAG}
     ports:
       - target: 3000
         published: ${PUERTO}
@@ -13,7 +13,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: ['${NODE}']
+        constraints: ["${NODE}"]
       resources:
         limits:
           memory: 1g
@@ -27,13 +27,16 @@ services:
       LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD}
       SESSION_SECRET: ${SESSION_SECRET}
       PUBLIC_URL: ${PUBLIC_URL}
-      INGEST_BITBUCKET_TOKEN: ${INGEST_BITBUCKET_TOKEN}
     volumes:
       - data:/data
+    logging:
+      driver: loki
+      options:
+        loki-url: ${LOKI_URL}
 
 volumes:
   data:
-    name: '${SERVICE_NAME}_releasenotes_data'
+    name: "${SERVICE_NAME}_data"
 
 networks:
   traefik:
